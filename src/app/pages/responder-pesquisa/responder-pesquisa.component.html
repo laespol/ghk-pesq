@@ -1,0 +1,264 @@
+<p-toast></p-toast>
+
+<div class="survey-page-container">
+  <!-- Top Gehaka Brand Bar -->
+  <header class="top-nav-bar">
+    <div class="nav-content">
+      <div class="brand-box">
+        <div class="brand-logo">
+          <div class="brand-logo-badge">
+            <img src="abras.png" alt="Logo Gehaka" class="brand-logo-img">
+          </div>
+          <div class="brand-texts">
+            <span class="brand-title">GEHAKA</span>
+            <span class="brand-subtitle">Instrumentação & Qualidade</span>
+          </div>
+        </div>
+      </div>
+      <div class="badge-tag">
+        <i class="pi pi-shield"></i> Resposta Segura
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content-wrapper">
+    <!-- 1. Estado de Carregamento -->
+    <div *ngIf="carregando" class="status-card loading-state">
+      <i class="pi pi-spin pi-spinner text-4xl text-primary mb-3"></i>
+      <h3>Carregando formulário...</h3>
+      <p>Aguarde um momento enquanto preparamos seu questionário.</p>
+    </div>
+
+    <!-- 2. Estado de Erro / Token Inválido -->
+    <div *ngIf="!carregando && telaErro" class="status-card error-state">
+      <div class="icon-circle error-circle">
+        <i class="pi pi-exclamation-triangle"></i>
+      </div>
+      <h2>Link Não Encontrado ou Inválido</h2>
+      <p class="desc">{{ mensagemErro }}</p>
+      <div class="help-box">
+        <i class="pi pi-info-circle"></i>
+        <span>Se você acredita que isto é um erro, por favor entre em contato com o suporte da Gehaka.</span>
+      </div>
+    </div>
+
+    <!-- 3. Estado de Já Respondida -->
+    <div *ngIf="!carregando && telaRespondida" class="status-card answered-state">
+      <div class="icon-circle success-circle">
+        <i class="pi pi-check-circle"></i>
+      </div>
+      <h2>Pesquisa Já Respondida</h2>
+      <p class="customer-greet" *ngIf="nomeCliente">Olá, <strong>{{ nomeCliente }}</strong>!</p>
+      <p class="desc">
+        Identificamos que a sua avaliação para <strong>"{{ pesquisa?.titulo }}"</strong> já foi registrada anteriormente.
+      </p>
+      <p class="conclusion-text" *ngIf="textoConclusao">
+        {{ textoConclusao }}
+      </p>
+      <div class="info-badge">
+        <i class="pi pi-lock"></i> Seus dados e respostas foram salvos com sucesso no sistema Gehaka.
+      </div>
+    </div>
+
+    <!-- 4. Estado de Pesquisa Expirada -->
+    <div *ngIf="!carregando && telaExpirada" class="status-card expired-state">
+      <div class="icon-circle expired-circle">
+        <i class="pi pi-clock"></i>
+      </div>
+      <h2>Pesquisa Encerrada</h2>
+      <p class="desc">{{ mensagemErro }}</p>
+    </div>
+
+    <!-- 5. Estado de Sucesso (Após Envio) -->
+    <div *ngIf="!carregando && telaSucesso" class="status-card success-state">
+      <div class="icon-circle success-circle pulse-animation">
+        <i class="pi pi-heart-fill"></i>
+      </div>
+      <h2>Agradecemos Sua Participação!</h2>
+      <p class="customer-greet" *ngIf="nomeCliente">Obrigado, <strong>{{ nomeCliente }}</strong>!</p>
+      <p class="desc">
+        Sua avaliação foi recebida com sucesso e ajudará diretamente a aprimorar nossos produtos, calibrações e atendimento.
+      </p>
+      <div class="conclusion-quote" *ngIf="textoConclusao">
+        <i class="pi pi-quote-left quote-icon"></i>
+        <p>{{ textoConclusao }}</p>
+      </div>
+      <div class="success-footer">
+        <span>Gehaka • Inovação e Precisão em Cada Medida</span>
+      </div>
+    </div>
+
+    <!-- 6. Formulário Ativo de Resposta -->
+    <div *ngIf="!carregando && !telaErro && !telaRespondida && !telaExpirada && !telaSucesso" class="survey-form-container">
+      
+      <!-- Cabeçalho da Pesquisa -->
+      <section class="survey-header-card">
+        <div class="header-tag">Pesquisa de Satisfação & Qualidade</div>
+        <h1 class="survey-title">{{ pesquisa?.titulo }}</h1>
+        <p class="customer-greeting" *ngIf="nomeCliente">
+          Destinatário: <strong>{{ nomeCliente }}</strong>
+        </p>
+        <p class="survey-intro" *ngIf="pesquisa?.texto_introducao">
+          {{ pesquisa?.texto_introducao }}
+        </p>
+
+        <!-- Barra de Progresso Interativa -->
+        <div class="progress-section">
+          <div class="progress-info">
+            <span class="progress-label">Progresso do questionário</span>
+            <span class="progress-percentage">{{ progressoPorcentagem }}% concluído</span>
+          </div>
+          <div class="custom-progress-bar">
+            <div class="progress-fill" [style.width.%]="progressoPorcentagem"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Lista de Perguntas Dinâmicas -->
+      <section class="questions-list">
+        <div 
+          *ngFor="let perg of perguntas; let idx = index" 
+          class="question-card"
+          [class.has-error]="tentouEnviar && perg.requerido && !isPerguntaRespondida(perg)"
+          [class.answered]="isPerguntaRespondida(perg)">
+          
+          <div class="question-header">
+            <div class="question-number">{{ idx + 1 }}</div>
+            <div class="question-title-box">
+              <h3 class="question-title">
+                {{ perg.titulo }}
+                <span *ngIf="perg.requerido" class="required-star" title="Pergunta Obrigatória">*</span>
+              </h3>
+              <p *ngIf="perg.descricao" class="question-desc">{{ perg.descricao }}</p>
+            </div>
+          </div>
+
+          <div class="question-body">
+            
+            <!-- TIPO 1: NPS 0 A 10 -->
+            <div *ngIf="perg.tipo === 'NOTA_0_10'" class="nps-container">
+              <div class="nps-scale-labels">
+                <span class="nps-label-left"><i class="pi pi-thumbs-down"></i> Muito improvável</span>
+                <span class="nps-label-right">Muito provável <i class="pi pi-thumbs-up"></i></span>
+              </div>
+              <div class="nps-grid">
+                <button 
+                  type="button" 
+                  *ngFor="let val of npsValores" 
+                  class="nps-btn"
+                  [class.nps-detractor]="val <= 6"
+                  [class.nps-passive]="val === 7 || val === 8"
+                  [class.nps-promoter]="val >= 9"
+                  [class.selected]="respostasMap[perg.id_pergunta].valor_nota === val"
+                  (click)="selecionarNps(perg.id_pergunta, val)">
+                  {{ val }}
+                </button>
+              </div>
+            </div>
+
+            <!-- TIPO 2: ESTRELAS 1 A 5 -->
+            <div *ngIf="perg.tipo === 'ESTRELAS_1_5'" class="stars-container">
+              <div class="stars-row">
+                <button 
+                  type="button" 
+                  *ngFor="let star of estrelasValores"
+                  class="star-btn"
+                  [class.active]="(respostasMap[perg.id_pergunta].valor_nota || 0) >= star"
+                  (click)="selecionarEstrela(perg.id_pergunta, star)">
+                  <i class="pi pi-star-fill"></i>
+                </button>
+              </div>
+              <div class="star-rating-text" *ngIf="respostasMap[perg.id_pergunta].valor_nota">
+                {{ estrelasLabels[respostasMap[perg.id_pergunta].valor_nota || 0] }}
+              </div>
+            </div>
+
+            <!-- TIPO 3: ESCOLHA ÚNICA -->
+            <div *ngIf="perg.tipo === 'ESCOLHA_UNICA' || perg.tipo === 'SELECAO_UNICA'" class="options-grid">
+              <div 
+                *ngFor="let op of perg.opcoes" 
+                class="option-card radio-card"
+                [class.selected]="respostasMap[perg.id_pergunta].valor_opcao === op"
+                (click)="selecionarOpcaoUnica(perg.id_pergunta, op)">
+                <div class="radio-indicator">
+                  <div class="radio-inner" *ngIf="respostasMap[perg.id_pergunta].valor_opcao === op"></div>
+                </div>
+                <span class="option-label">{{ op }}</span>
+              </div>
+            </div>
+
+            <!-- TIPO 4: MÚLTIPLA ESCOLHA -->
+            <div *ngIf="perg.tipo === 'MULTIPLA_ESCOLHA'" class="options-grid">
+              <div 
+                *ngFor="let op of perg.opcoes" 
+                class="option-card checkbox-card"
+                [class.selected]="isOpcaoSelecionada(perg.id_pergunta, op)"
+                (click)="toggleMultiplaEscolha(perg.id_pergunta, op)">
+                <div class="checkbox-indicator">
+                  <i class="pi pi-check" *ngIf="isOpcaoSelecionada(perg.id_pergunta, op)"></i>
+                </div>
+                <span class="option-label">{{ op }}</span>
+              </div>
+            </div>
+
+            <!-- TIPO 5: SIM / NÃO -->
+            <div *ngIf="perg.tipo === 'SIM_NAO'" class="yesno-grid">
+              <button 
+                type="button" 
+                class="yesno-btn yes-btn"
+                [class.selected]="respostasMap[perg.id_pergunta].valor_opcao === 'Sim'"
+                (click)="selecionarOpcaoUnica(perg.id_pergunta, 'Sim')">
+                <i class="pi pi-check"></i> Sim
+              </button>
+              <button 
+                type="button" 
+                class="yesno-btn no-btn"
+                [class.selected]="respostasMap[perg.id_pergunta].valor_opcao === 'Não'"
+                (click)="selecionarOpcaoUnica(perg.id_pergunta, 'Não')">
+                <i class="pi pi-times"></i> Não
+              </button>
+            </div>
+
+            <!-- TIPO 6: TEXTO LIVRE -->
+            <div *ngIf="perg.tipo === 'TEXTO_LIVRE' || perg.tipo === 'TEXTO'" class="text-input-container">
+              <textarea 
+                rows="4" 
+                class="custom-textarea" 
+                placeholder="Digite sua resposta ou comentário aqui..."
+                [(ngModel)]="respostasMap[perg.id_pergunta].valor_texto">
+              </textarea>
+            </div>
+
+          </div>
+
+          <!-- Mensagem de Erro de Validação -->
+          <div *ngIf="tentouEnviar && perg.requerido && !isPerguntaRespondida(perg)" class="validation-error-msg">
+            <i class="pi pi-exclamation-circle"></i> Por favor, responda esta pergunta obrigatória.
+          </div>
+        </div>
+      </section>
+
+      <!-- Botão de Envio Final -->
+      <section class="submit-section">
+        <button 
+          type="button" 
+          class="submit-btn" 
+          [disabled]="enviando"
+          (click)="enviarRespostas()">
+          <span *ngIf="!enviando">
+            <i class="pi pi-send"></i> Enviar Avaliação
+          </span>
+          <span *ngIf="enviando">
+            <i class="pi pi-spin pi-spinner"></i> Gravando Respostas...
+          </span>
+        </button>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Rodapé Corporativo -->
+  <footer class="footer-bar">
+    <p>© {{ 2026 }} Gehaka - Todos os direitos reservados • Ambiente Seguro de Avaliação</p>
+  </footer>
+</div>
