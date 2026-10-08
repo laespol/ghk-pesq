@@ -95,8 +95,10 @@
       <section class="survey-header-card">
         <div class="header-tag">Pesquisa de Satisfação & Qualidade</div>
         <h1 class="survey-title">{{ pesquisa?.titulo }}</h1>
-        <p class="customer-greeting" *ngIf="nomeCliente">
-          Destinatário: <strong>{{ nomeCliente }}</strong>
+        <p class="customer-greeting" *ngIf="nomeCliente || produtoServico">
+          <span *ngIf="nomeCliente">Destinatário: <strong>{{ nomeCliente }}</strong></span>
+          <span *ngIf="nomeCliente && produtoServico" style="margin: 0 8px; opacity: 0.5;">•</span>
+          <span *ngIf="produtoServico"><i class="pi pi-box mr-1"></i>Item avaliado: <strong>{{ produtoServico }}</strong></span>
         </p>
         <p class="survey-intro" *ngIf="pesquisa?.texto_introducao">
           {{ pesquisa?.texto_introducao }}

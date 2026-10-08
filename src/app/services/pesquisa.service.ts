@@ -20,6 +20,7 @@ export interface PesquisaPublicaResponse {
   message?: string;
   titulo?: string;
   nome_cliente?: string;
+  produto_servico?: string;
   data_resposta?: string;
   texto_conclusao?: string;
   dados?: {
@@ -29,6 +30,7 @@ export interface PesquisaPublicaResponse {
     texto_introducao?: string;
     texto_conclusao?: string;
     nome_cliente: string;
+    produto_servico?: string;
     perguntas: PesquisaPergunta[];
   };
 }

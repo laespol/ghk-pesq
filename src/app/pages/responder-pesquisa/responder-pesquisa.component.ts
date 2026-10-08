@@ -40,6 +40,7 @@ export class ResponderPesquisaComponent implements OnInit {
   pesquisa: any = null;
   perguntas: PesquisaPergunta[] = [];
   nomeCliente: string = '';
+  produtoServico: string = '';
   textoConclusao: string = '';
 
   // Respostas preenchidas pelo usuário (map por id_pergunta)
@@ -103,6 +104,7 @@ export class ResponderPesquisaComponent implements OnInit {
           this.pesquisa = res.dados;
           this.perguntas = res.dados.perguntas || [];
           this.nomeCliente = res.dados.nome_cliente || '';
+          this.produtoServico = res.dados.produto_servico || '';
           this.textoConclusao = res.dados.texto_conclusao || '';
 
           // Inicializa mapa de respostas
